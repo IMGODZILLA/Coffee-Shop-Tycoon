@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Shop Tycoon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Special+Elite&display=swap" rel="stylesheet">
+    <style>
+        /* Base styles and animations */
+        body {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            touch-action: manipulation;
+            background-color: var(--bg-main);
+            color: var(--text-default);
+        }
+        .stat-card, .card {
+            background: var(--bg-card-gradient);
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 4px 6px -1px var(--shadow-color);
+        }
+        .btn {
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 2px 4px 0px var(--shadow-color);
+            transition: all 0.1s ease-in-out;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px 0px var(--shadow-color);
+            filter: brightness(1.1);
+        }
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 2px 0px var(--shadow-color);
+        }
+        .btn:disabled {
+            cursor: not-allowed;
+            background-color: var(--btn-disabled-bg) !important;
+            color: var(--btn-disabled-text);
+            box-shadow: none;
+            border-color: var(--btn-disabled-bg);
+            transform: none;
+            filter: none;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes number-pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .number-pop {
+            animation: number-pop 0.2s ease-out;
+        }
+
+        /* Theming Variables */
+        :root, body[data-theme='light'] {
+            --bg-main: #f0f4f8;
+            --bg-card-gradient: linear-gradient(145deg, #ffffff, #e6eef5);
+            --text-default: #1a202c;
+            --text-muted: #4a5568;
+            --text-header: #2c5282;
+            --border-color: #a0aec0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --hover-bg: #ebf8ff;
+            --btn-disabled-bg: #cbd5e0; 
+            --btn-disabled-text: #a0aec0;
+        }
+        body[data-theme='dark'] {
+            --bg-main: #1a202c;
+            --bg-card-gradient: linear-gradient(145deg, #2d3748, #1a202c);
+            --text-default: #e2e8f0;
+            --text-muted: #a0aec0;
+            --text-header: #90cdf4;
+            --border-color: #4a5568;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --hover-bg: #2b6cb0;
+            --btn-disabled-bg: #4a5568;
+            --btn-disabled-text: #718096;
+        }
+        body[data-theme='latte'] {
+            --bg-main: #f3e5d8;
+            --bg-card-gradient: linear-gradient(145deg, #fffaf0, #e1d3c5);
+            --text-default: #4f260f;
+            --text-muted: #7a3a0c;
+            --text-header: #9a3412;
+            --border-color: #a27b5b;
+            --shadow-color: rgba(79, 38, 15, 0.15);
+            --hover-bg: #fff0e1;
+            --btn-disabled-bg: #d7ccc8;
+            --btn-disabled-text: #a1887f;
+        }
+        body[data-theme='mint'] {
+            --bg-main: #f0fff4;
+            --bg-card-gradient: linear-gradient(145deg, #ffffff, #c6f6d5);
+            --text-default: #22543d;
+            --text-muted: #2f855a;
+            --text-header: #276749;
+            --border-color: #9ae6b4;
+            --shadow-color: rgba(34, 84, 61, 0.1);
+            --hover-bg: #c6f6d5;
+            --btn-disabled-bg: #9ae6b4;
+            --btn-disabled-text: #68d391;
+        }
+        body[data-theme='coffeehouse'] {
+            --bg-main: #4a2c2a;
+            --bg-card-gradient: linear-gradient(145deg, #f5e5d3, #d9c8b8);
+            --text-default: #3a241d;
+            --text-muted: #8a6654;
+            --text-header: #5a382b;
+            --border-color: #3a241d;
+            --shadow-color: rgba(58, 36, 29, 0.2);
+            --hover-bg: #e6d5c3;
+            background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%233a241d' fill-opacity='0.1' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+        }
+        /* Applying variables */
+        .header-title { color: var(--text-header); }
+        .header-subtitle { color: var(--text-muted); }
+        #gameLog { color: var(--text-muted); }
+        .upgrade-description { color: var(--text-muted); }
+
+        /* Paper Menu Style */
+        .paper-menu {
+            font-family: 'Special Elite', monospace;
+            background-color: #fdfaf0; /* Creamy paper color */
+            border: 1px solid #dcd0c0; /* Softer border */
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden; /* Keep stains contained */
+        }
+        .paper-menu h1 {
+            color: #5a382b; /* Coffee brown */
+        }
+        .paper-menu p {
+            color: #6d4c41;
+        }
+        .coffee-stain {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><filter id="wobble"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" result="warp" /><feDisplacementMap xChannelSelector="R" yChannelSelector="G" scale="3" in="SourceGraphic" in2="warp" /></filter></defs><circle cx="50" cy="50" r="35" fill="none" stroke="rgba(110, 60, 40, 0.3)" stroke-width="12" filter="url(%23wobble)" /></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <!-- Opening Menu -->
+    <div id="openingMenu" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background-color: var(--bg-main);">
+        <div class="paper-menu p-8 w-11/12 max-w-lg text-center" style="animation: fadeIn 0.6s ease-out forwards;">
+            <!-- Coffee Stains -->
+            <div class="coffee-stain" style="top: -50px; left: -60px; transform: rotate(-15deg);"></div>
+            <div class="coffee-stain" style="bottom: -80px; right: -70px; transform: rotate(30deg); width: 250px; height: 250px; opacity: 0.8;"></div>
+            
+            <div class="relative"> <!-- Content container to sit above stains -->
+                <h1 class="text-6xl font-bold mb-2">Coffee Tycoon</h1>
+                <p class="text-xl mb-8">Your journey from cart to empire starts here.</p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button id="newGameBtn" class="btn bg-green-700 text-white font-bold py-3 px-6 w-full text-lg" style="border-color: #4a2c2a;">New Game</button>
+                    <button id="loadGameBtn" class="btn bg-blue-800 text-white font-bold py-3 px-6 w-full text-lg" style="border-color: #4a2c2a;">Load Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 space-y-2"></div>
+    
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="card p-6 w-11/12 max-w-md flex flex-col">
+            <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                <h2 class="text-3xl font-bold">Settings</h2>
+                <button id="closeSettingsBtn" class="text-3xl font-bold hover:text-red-500">X</button>
+            </div>
+            <div class="overflow-y-auto max-h-[70vh] pr-2">
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">Themes</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button class="theme-btn btn p-4" data-theme="light">
+                            <div class="w-full h-8 bg-gray-100 border-2 border-gray-400 rounded mb-2"></div> Light
+                        </button>
+                        <button class="theme-btn btn p-4" data-theme="dark">
+                            <div class="w-full h-8 bg-gray-800 border-2 border-gray-500 rounded mb-2"></div> Dark
+                        </button>
+                        <button class="theme-btn btn p-4" data-theme="latte">
+                             <div class="w-full h-8 rounded" style="background-color: #f3e5d8; border: 2px solid #a27b5b; margin-bottom: 0.5rem;"></div> Latte
+                        </button>
+                        <button class="theme-btn btn p-4" data-theme="mint">
+                            <div class="w-full h-8 rounded" style="background-color: #f0fff4; border: 2px solid #9ae6b4; margin-bottom: 0.5rem;"></div> Mint
+                        </button>
+                        <button class="theme-btn btn p-4" data-theme="coffeehouse">
+                            <div class="w-full h-8 rounded" style="background-color: #f5e5d3; border: 2px solid #3a241d; margin-bottom: 0.5rem;"></div> Coffee House
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-6 pt-4 border-t-2" style="border-color: var(--border-color);">
+                     <h3 class="text-xl font-semibold mb-3">Display</h3>
+                    <div class="flex justify-between items-center">
+                        <span>Shorten Numbers (K, M, B)</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="shortenNumbersToggle" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600" style="border-color: var(--border-color);"></div>
+                        </label>
+                    </div>
+                </div>
+                <div class="mt-6 pt-4 border-t-2" style="border-color: var(--border-color);">
+                    <button id="unlockDebugBtn" class="btn bg-gray-600 text-white font-bold py-2 px-4 w-full">Unlock Debug Menu</button>
+                    <div id="debugMenuContainer" class="hidden">
+                        <h3 class="text-xl font-semibold mb-3">Debug Menu</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                           <button id="add1kBtn" class="btn bg-yellow-500 text-black font-bold py-2 px-4 w-full">Add $1k</button>
+                           <button id="add10kBtn" class="btn bg-yellow-500 text-black font-bold py-2 px-4 w-full">Add $10k</button>
+                           <button id="add100kBtn" class="btn bg-yellow-500 text-black font-bold py-2 px-4 w-full">Add $100k</button>
+                           <button id="add1mBtn" class="btn bg-yellow-500 text-black font-bold py-2 px-4 w-full">Add $1M</button>
+                           <button id="add1bBtn" class="btn bg-yellow-500 text-black font-bold py-2 px-4 w-full">Add $1B</button>
+                           <button id="add1tBtn" class="btn bg-yellow-500 text-black font-bold py-2 px-4 w-full">Add $1T</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-4 border-t-2" style="border-color: var(--border-color);">
+                    <h3 class="text-xl font-semibold mb-3">Game Data</h3>
+                    <button id="saveBtn" class="btn bg-blue-500 text-white font-bold py-2 px-4 w-full">Save Game</button>
+                    <button id="resetBtn" class="btn bg-red-500 text-white font-bold py-2 px-4 w-full mt-2">Reset Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bean Shop Modal -->
+    <div id="beanShopModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="card p-6 w-11/12 max-w-2xl flex flex-col">
+            <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                <h2 class="text-3xl font-bold">Bean Shop</h2>
+                <button id="closeBeanShopBtn" class="text-3xl font-bold hover:text-red-500">X</button>
+            </div>
+            <div id="beanShopContainer" class="overflow-y-auto max-h-[70vh] grid grid-cols-1 md:grid-cols-2 gap-4 pr-2">
+                <!-- Bean options will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div class="card p-8 w-11/12 max-w-lg text-center">
+            <h1 class="text-7xl font-bold text-red-500 mb-4">GAME OVER</h1>
+            <p class="text-2xl mb-8 header-subtitle">You've run out of money and coffee!</p>
+            <button id="restartGameBtn" class="btn bg-green-600 text-white font-bold py-3 px-6 w-full text-lg">Start New Empire</button>
+        </div>
+    </div>
+    
+    <!-- Password Prompt Modal -->
+    <div id="passwordModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="card p-6 w-11/12 max-w-sm text-center">
+            <h2 class="text-2xl font-bold mb-4">Enter Password</h2>
+            <input type="password" id="passwordInput" class="w-full p-2 border-2 rounded mb-4" style="border-color: var(--border-color); background-color: var(--bg-main); color: var(--text-default);">
+            <div class="flex gap-4">
+                <button id="submitPasswordBtn" class="btn bg-green-600 text-white font-bold py-2 px-4 w-full">Submit</button>
+                <button id="cancelPasswordBtn" class="btn bg-red-600 text-white font-bold py-2 px-4 w-full">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainGameContainer" class="container mx-auto p-4 max-w-5xl hidden">
+
+        <!-- Header -->
+        <header class="text-center mb-6 card p-6">
+            <div class="flex justify-center items-center relative gap-4">
+                <div id="tipJarContainer" class="relative cursor-pointer order-first" title="Click to collect tips!">
+                    <!-- Tip Jar SVG -->
+                    <svg id="tipJarSvg" width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+                        <!-- Jar Glass -->
+                        <path d="M25 95 V 30 H 20 V 25 H 80 V 30 H 75 V 95 H 80 V 100 H 20 V 95 H 25 Z" fill="rgba(255, 255, 255, 0.2)" />
+                        <!-- Jar Outline -->
+                        <path d="M20 25 H 80 M 20 25 V 100 H 80 V 25 M 25 30 V 95 M 75 30 V 95" stroke="var(--text-default)" stroke-width="5" fill="none" />
+                        <!-- Jar Lid -->
+                        <path d="M30 5 H 70 V 20 H 30 Z" fill="var(--text-default)" />
+                        <path d="M35 10 H 65" stroke="#F5E5D3" stroke-width="5" fill="none"/>
+
+                        <!-- Fill levels -->
+                        <g id="tip-fill-1" class="tip-fill hidden">
+                            <rect x="30" y="85" width="10" height="10" fill="#FFFFFF" />
+                            <rect x="55" y="85" width="10" height="10" fill="#FFFFFF" />
+                            <rect x="42" y="80" width="10" height="10" fill="#E0E0E0" />
+                        </g>
+                        <g id="tip-fill-2" class="tip-fill hidden">
+                            <rect x="25" y="75" width="50" height="10" fill="#16a34a" />
+                            <rect x="30" y="85" width="10" height="10" fill="#FFFFFF" />
+                            <rect x="55" y="85" width="10" height="10" fill="#FFFFFF" />
+                            <rect x="42" y="80" width="10" height="10" fill="#E0E0E0" />
+                        </g>
+                        <g id="tip-fill-3" class="tip-fill hidden">
+                            <rect x="25" y="75" width="50" height="10" fill="#16a34a" />
+                            <rect x="25" y="60" width="50" height="10" fill="#22c55e" />
+                            <rect x="30" y="85" width="10" height="10" fill="#FFFFFF" />
+                            <rect x="55" y="85" width="10" height="10" fill="#FFFFFF" />
+                            <rect x="42" y="80" width="10" height="10" fill="#E0E0E0" />
+                            <rect x="60" y="50" width="10" height="10" fill="#E0E0E0" />
+                        </g>
+                        <g id="tip-fill-4" class="tip-fill hidden">
+                            <rect x="25" y="75" width="50" height="10" fill="#16a34a" />
+                            <rect x="25" y="60" width="50" height="10" fill="#22c55e" />
+                            <rect x="25" y="45" width="50" height="10" fill="#16a34a" />
+                            <rect x="30" y="85" width="10" height="10" fill="#FFFFFF" />
+                            <rect x="55" y="85" width="10" height="10" fill="#FFFFFF" />
+                            <rect x="42" y="80" width="10" height="10" fill="#E0E0E0" />
+                            <rect x="60" y="50" width="10" height="10" fill="#E0E0E0" />
+                            <rect x="35" y="35" width="10" height="10" fill="#FFFFFF" />
+                        </g>
+                    </svg>
+                </div>
+                <h1 class="text-5xl font-bold header-title">Coffee Tycoon</h1>
+                 <button id="settingsBtn" class="absolute right-2 top-2 p-2">
+                     <svg class="h-8 w-8" fill="var(--text-default)" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.44,0.17-0.48,0.41L9.2,5.77C8.61,6.01,8.08,6.33,7.58,6.71L5.19,5.75C4.97,5.68,4.72,5.75,4.6,5.97L2.68,9.29 c-0.11,0.2-0.06,0.47,0.12,0.61l2.03,1.58C4.78,11.69,4.76,12,4.76,12.31c0,0.31,0.02,0.63,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.04,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.48-0.41l0.36-2.54c0.59-0.24,1.12-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0.01,0.59-0.22l1.92-3.32c0.12-0.2,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+                </button>
+            </div>
+            <p class="header-subtitle mt-2 text-lg">From cart to empire!</p>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Left Column: Core Actions & Stats -->
+            <div class="md:col-span-1 space-y-6">
+                <!-- Stats -->
+                <div class="card p-6 stat-card">
+                    <h2 class="text-2xl font-semibold mb-4 text-center border-b-2 pb-2" style="border-color: var(--border-color);">Stats</h2>
+                    <div class="space-y-4 text-lg">
+                        <div class="flex justify-between items-center p-3 rounded" style="background-color: rgba(46, 204, 113, 0.1);">
+                            <span class="font-medium text-green-800">💰 Money</span>
+                            <span id="moneyDisplay" class="font-bold text-green-800">$0</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 rounded" style="background-color: rgba(230, 126, 34, 0.1);">
+                            <span class="font-medium text-amber-800">☕ Beans</span>
+                            <span id="beansDisplay" class="font-bold text-amber-800">0</span>
+                        </div>
+                         <div class="flex justify-between items-center p-3 rounded text-base" style="background-color: rgba(52, 152, 219, 0.1);">
+                            <span class="font-medium text-blue-800">📈 Sales/sec</span>
+                            <span id="cpsDisplay" class="font-bold text-blue-800">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 rounded text-base" style="background-color: rgba(155, 89, 182, 0.1);">
+                            <span class="font-medium text-purple-800">🌿 Brewing</span>
+                            <span id="brewingDisplay" class="font-bold text-purple-800 text-right">Standard</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Core Actions -->
+                <div class="card p-6">
+                     <h2 class="text-2xl font-semibold mb-4 text-center border-b-2 pb-2" style="border-color: var(--border-color);">Actions</h2>
+                    <div class="space-y-2">
+                        <p class="text-center header-subtitle mb-2">Buy Beans:</p>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button id="buy1BeanBtn" class="w-full btn bg-amber-500 text-white font-bold py-2 px-2 text-base">Buy 1<br>-$1</button>
+                            <button id="buy10BeanBtn" class="w-full btn bg-amber-600 text-white font-bold py-2 px-2 text-base">Buy 10<br>-$10</button>
+                            <button id="buy100BeanBtn" class="w-full btn bg-amber-700 text-white font-bold py-2 px-2 text-base">Buy 100<br>-$100</button>
+                        </div>
+                    </div>
+                    <hr class="my-4" style="border-color: var(--border-color); border-style: dashed;">
+                    <button id="sellCoffeeBtn" class="w-full btn bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 text-lg">
+                        Brew & Sell
+                    </button>
+                </div>
+                
+                <!-- Brewing Station -->
+                <div class="card p-6">
+                    <h2 class="text-2xl font-semibold mb-4 text-center border-b-2 pb-2" style="border-color: var(--border-color);">Brewing</h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center text-lg">
+                            <span>Grounds:</span>
+                            <span id="groundsDisplay" class="font-bold">0</span>
+                        </div>
+                        <button id="grindBtn" class="w-full btn bg-stone-500 hover:bg-stone-600 text-white font-bold py-2 px-3">Grind</button>
+                        <div class="flex justify-between items-center mt-2 text-lg">
+                            <span>Ready:</span>
+                            <span id="pucksDisplay" class="font-bold">0</span>
+                        </div>
+                        <button id="tampBtn" class="w-full btn bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3">Tamp</button>
+                    </div>
+                </div>
+
+                <!-- Game Log -->
+                <div class="card p-6">
+                    <h2 class="text-2xl font-semibold mb-4 text-center border-b-2 pb-2" style="border-color: var(--border-color);">Log</h2>
+                    <div id="gameLog" class="text-base space-y-2 h-48 overflow-y-auto pr-2">
+                        <!-- Log messages appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Upgrades -->
+            <div class="md:col-span-2">
+                <div class="card p-6">
+                    <h2 class="text-2xl font-semibold mb-4 text-center border-b-2 pb-2" style="border-color: var(--border-color);">Upgrades</h2>
+                    <div id="upgradesContainer" class="space-y-4">
+                        <!-- Upgrades will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+         <!-- Page Footer -->
+        <footer class="text-center mt-8">
+            <button id="beanShopBtn" class="btn bg-purple-600 text-white font-bold py-2 px-4 text-base">Bean Shop</button>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const openingMenu = document.getElementById('openingMenu');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const loadGameBtn = document.getElementById('loadGameBtn');
+        const mainGameContainer = document.getElementById('mainGameContainer');
+        const moneyDisplay = document.getElementById('moneyDisplay');
+        const beansDisplay = document.getElementById('beansDisplay');
+        const groundsDisplay = document.getElementById('groundsDisplay');
+        const pucksDisplay = document.getElementById('pucksDisplay');
+        const cpsDisplay = document.getElementById('cpsDisplay');
+        const brewingDisplay = document.getElementById('brewingDisplay');
+        const buy1BeanBtn = document.getElementById('buy1BeanBtn');
+        const buy10BeanBtn = document.getElementById('buy10BeanBtn');
+        const buy100BeanBtn = document.getElementById('buy100BeanBtn');
+        const sellCoffeeBtn = document.getElementById('sellCoffeeBtn');
+        const grindBtn = document.getElementById('grindBtn');
+        const tampBtn = document.getElementById('tampBtn');
+        const upgradesContainer = document.getElementById('upgradesContainer');
+        const gameLog = document.getElementById('gameLog');
+        const saveBtn = document.getElementById('saveBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const themeButtons = document.querySelectorAll('.theme-btn');
+        const shortenNumbersToggle = document.getElementById('shortenNumbersToggle');
+        const beanShopBtn = document.getElementById('beanShopBtn');
+        const beanShopModal = document.getElementById('beanShopModal');
+        const closeBeanShopBtn = document.getElementById('closeBeanShopBtn');
+        const beanShopContainer = document.getElementById('beanShopContainer');
+        const tipJarContainer = document.getElementById('tipJarContainer');
+        const add1kBtn = document.getElementById('add1kBtn');
+        const add10kBtn = document.getElementById('add10kBtn');
+        const add100kBtn = document.getElementById('add100kBtn');
+        const add1mBtn = document.getElementById('add1mBtn');
+        const add1bBtn = document.getElementById('add1bBtn');
+        const add1tBtn = document.getElementById('add1tBtn');
+        const unlockDebugBtn = document.getElementById('unlockDebugBtn');
+        const debugMenuContainer = document.getElementById('debugMenuContainer');
+        const gameOverModal = document.getElementById('gameOverModal');
+        const restartGameBtn = document.getElementById('restartGameBtn');
+        const passwordModal = document.getElementById('passwordModal');
+        const passwordInput = document.getElementById('passwordInput');
+        const submitPasswordBtn = document.getElementById('submitPasswordBtn');
+        const cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
+
+        // Game State
+        let gameState = {
+            money: 10,
+            beansAmount: 0,
+            grounds: 0,
+            pucks: 0,
+            tipJarAmount: 0,
+            shortenNumbers: true,
+            upgrades: {
+                barista: 0,
+                espressoMachine: 0,
+                marketing: 0,
+                franchise: 0,
+                coffeeFarm: 0,
+                driveThru: 0,
+                celebrityEndorsement: 0,
+                grinder: 0,
+                tamper: 0,
+            },
+            beans: {
+                owned: ['standard'],
+                active: 'standard'
+            }
+        };
+
+        const beanInfo = {
+            standard: {
+                name: 'Standard Beans',
+                description: 'Simple, reliable, and free. No special effects.',
+                cost: 0,
+                effectText: 'Baseline performance.'
+            },
+            arabica: {
+                name: 'Arabica Roast',
+                description: 'A smooth, sweet flavor that customers will pay more for.',
+                cost: 5000,
+                priceBonus: 0.50,
+                effectText: '+ $0.50 per cup sold.'
+            },
+            robusta: {
+                name: 'Robusta Power',
+                description: 'Highly caffeinated! Gets your baristas working faster.',
+                cost: 15000,
+                speedBonus: 0.15,
+                effectText: '15% faster auto-sales.'
+            },
+            ethiopian: {
+                name: 'Ethiopian Yirgacheffe',
+                description: 'An exotic bean with a complex flavor. Very popular!',
+                cost: 50000,
+                priceBonus: 1.50,
+                conservationChance: 0.05,
+                effectText: '+ $1.50 per cup & 5% chance to not use beans on sale.'
+            },
+             geisha: {
+                name: 'Panama Geisha',
+                description: 'One of the most exclusive and expensive beans in the world.',
+                cost: 120000,
+                priceBonus: 2.00,
+                passiveIncomeBonus: 1.10, // 10% bonus
+                effectText: '+ $2.00 per cup & 10% boost to passive income.'
+            }
+        };
+
+        // ... existing upgradeInfo and game logic ...
+        // Upgrade Definitions
+        const upgradeInfo = {
+            barista: {
+                name: 'Hire Barista',
+                description: 'Automates the entire coffee-making process: buys, grinds, tamps, and sells coffee.',
+                baseCost: 15,
+                costMultiplier: 1.5,
+                effect: (level) => `Works automatically, selling up to ${level} cup(s) per cycle.`,
+            },
+            grinder: {
+                name: 'Upgrade Grinder',
+                description: 'Grind more beans into usable grounds with each click.',
+                baseCost: 75,
+                costMultiplier: 1.9,
+                effect: (level) => `Grinds ${1 + level} beans per click.`
+            },
+            tamper: {
+                name: 'Precision Tamper',
+                description: 'A better tamp extracts more flavor, increasing coffee price.',
+                baseCost: 150,
+                costMultiplier: 2.1,
+                effect: (level) => `+ $${(level * 0.15).toFixed(2)} per cup.`
+            },
+            espressoMachine: {
+                name: 'Better Espresso Machine',
+                description: 'Increases the price of each cup of coffee.',
+                baseCost: 100,
+                costMultiplier: 2,
+                effect: (level) => `+ $${(level * 0.25).toFixed(2)} per cup.`,
+            },
+            marketing: {
+                name: 'Marketing Campaign',
+                description: 'Increases the speed of automatic sales.',
+                baseCost: 500,
+                costMultiplier: 2.5,
+                effect: (level) => `Sales are ${level * 10}% faster.`,
+            },
+            coffeeFarm: {
+                name: 'Start a Coffee Farm',
+                description: 'Passively generates coffee beans for you.',
+                baseCost: 2500,
+                costMultiplier: 2.2,
+                effect: (level) => `Generates ${level * 5} cups per second.`,
+            },
+            driveThru: {
+                name: 'Build a Drive-Thru',
+                description: 'Significantly increases the value of each coffee sold.',
+                baseCost: 5000,
+                costMultiplier: 3,
+                effect: (level) => `+ $${level.toFixed(2)} per cup.`,
+            },
+            celebrityEndorsement: {
+                name: 'Celebrity Endorsement',
+                description: 'A famous face makes customers flock to your shop.',
+                baseCost: 20000,
+                costMultiplier: 3.5,
+                effect: (level) => `Sales are an additional ${level * 5}% faster.`,
+            },
+            franchise: {
+                name: 'Open a Franchise',
+                description: 'Generates passive income every second.',
+                baseCost: 10000,
+                costMultiplier: 3,
+                effect: (level) => `Generates $${level * 5} per second.`,
+            }
+        };
+
+        // Game Logic
+        const COFFEE_COST = 1;
+
+        function getCoffeePrice() {
+            const machineBonus = gameState.upgrades.espressoMachine * 0.25;
+            const driveThruBonus = gameState.upgrades.driveThru * 1;
+            const tamperBonus = gameState.upgrades.tamper * 0.15;
+            const activeBean = beanInfo[gameState.beans.active];
+            const beanBonus = activeBean.priceBonus || 0;
+            return 2 + machineBonus + driveThruBonus + beanBonus + tamperBonus;
+        }
+
+        function getAutoSellInterval() {
+            const marketingBonus = 1 - (gameState.upgrades.marketing * 0.1);
+            const celebrityBonus = 1 - (gameState.upgrades.celebrityEndorsement * 0.05);
+            const activeBean = beanInfo[gameState.beans.active];
+            const beanBonus = activeBean.speedBonus ? (1 - activeBean.speedBonus) : 1;
+            return Math.max(200, 2000 * marketingBonus * celebrityBonus * beanBonus);
+        }
+        
+        function getPassiveIncome() {
+            const baseIncome = gameState.upgrades.franchise * 5;
+            const activeBean = beanInfo[gameState.beans.active];
+            const beanBonus = activeBean.passiveIncomeBonus || 1;
+            return baseIncome * beanBonus;
+        }
+
+        function getTip() {
+            // Tips are now a default feature. Max tip of $1.00 per sale.
+            const maxTip = 1.00;
+            const tip = Math.random() * maxTip;
+            gameState.tipJarAmount += tip;
+        }
+
+        function sellCoffee() {
+            if (gameState.pucks > 0) {
+                const price = getCoffeePrice();
+                const initialTipAmount = gameState.tipJarAmount;
+                getTip();
+                const tipGenerated = gameState.tipJarAmount - initialTipAmount;
+                
+                gameState.pucks -= 1;
+                gameState.money += price;
+                
+                let logMsg = `👍 Manually sold 1 coffee for $${price.toFixed(2)}`;
+                if (tipGenerated > 0.01) {
+                     logMsg += ` (+$${tipGenerated.toFixed(2)} in tip jar)`;
+                }
+                logMessage(logMsg, 'green');
+                updateUI();
+            }
+        }
+        
+        function autoGenerateCoffee() {
+            const farmLevel = gameState.upgrades.coffeeFarm;
+            if (farmLevel > 0) {
+                const coffeeGenerated = farmLevel * 5;
+                gameState.beansAmount += coffeeGenerated;
+                updateUI();
+            }
+        }
+
+        function buyBeans(amount) {
+            const cost = amount * COFFEE_COST;
+            if (gameState.money >= cost) {
+                gameState.money -= cost;
+                gameState.beansAmount += amount;
+                logMessage(`☕ You bought ${amount} bag(s) of beans.`, 'gray');
+                updateUI();
+            }
+        }
+
+        function grindBeans() {
+            const grindAmount = 1 + gameState.upgrades.grinder;
+            const beansToGrind = Math.min(gameState.beansAmount, grindAmount);
+            if (beansToGrind > 0) {
+                gameState.beansAmount -= beansToGrind;
+                gameState.grounds += beansToGrind;
+                logMessage(`🔨 Ground ${beansToGrind} beans.`, 'stone');
+                updateUI();
+            }
+        }
+
+        function tampGrounds() {
+            if (gameState.grounds > 0) {
+                const amount = gameState.grounds;
+                gameState.grounds = 0;
+                gameState.pucks += amount;
+                logMessage(`🔧 Prepared ${amount} servings for brewing.`, 'cyan');
+                updateUI();
+            }
+        }
+
+        function getUpgradeCost(upgradeKey) {
+            const info = upgradeInfo[upgradeKey];
+            const level = gameState.upgrades[upgradeKey];
+            return Math.ceil(info.baseCost * Math.pow(info.costMultiplier, level));
+        }
+
+        function buyUpgrade(upgradeKey) {
+            const cost = getUpgradeCost(upgradeKey);
+            if (gameState.money >= cost) {
+                gameState.money -= cost;
+                gameState.upgrades[upgradeKey]++;
+                logMessage(`⭐ Upgraded "${upgradeInfo[upgradeKey].name}"!`, 'purple');
+                updateUI();
+            }
+        }
+        
+        function formatNumber(num) {
+            if (!gameState.shortenNumbers) {
+                return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            if (num < 1000) return num.toFixed(2);
+            if (num < 1e6) return (num / 1e3).toFixed(2) + 'K';
+            if (num < 1e9) return (num / 1e6).toFixed(2) + 'M';
+            if (num < 1e12) return (num / 1e9).toFixed(2) + 'B';
+            if (num < 1e15) return (num / 1e12).toFixed(2) + 'T';
+            return num.toExponential(2);
+        }
+        
+        function formatInteger(num) {
+            const intNum = Math.floor(num);
+             if (!gameState.shortenNumbers) {
+                return intNum.toLocaleString('en-US');
+            }
+            if (intNum < 1000) return intNum;
+            if (intNum < 1e6) return (intNum / 1e3).toFixed(2) + 'K';
+            if (intNum < 1e9) return (intNum / 1e6).toFixed(2) + 'M';
+            if (intNum < 1e12) return (intNum / 1e9).toFixed(2) + 'B';
+            if (intNum < 1e15) return (intNum / 1e12).toFixed(2) + 'T';
+            return intNum.toExponential(2);
+        }
+
+        function baristaWorkCycle() {
+            const baristaLevel = gameState.upgrades.barista;
+            if (baristaLevel <= 0) return;
+
+            // Priority 1: Sell Coffee
+            if (gameState.pucks > 0) {
+                const cupsToSell = Math.min(gameState.pucks, baristaLevel);
+                const price = getCoffeePrice();
+                const activeBean = beanInfo[gameState.beans.active];
+                const conservationChance = activeBean.conservationChance || 0;
+                
+                let cupsConsumed = cupsToSell;
+                if (activeBean.conservationChance) {
+                    let conserved = 0;
+                    for(let i = 0; i < cupsToSell; i++) {
+                         if (Math.random() < conservationChance) {
+                            conserved++;
+                        }
+                    }
+                    cupsConsumed -= conserved;
+                }
+
+                const earnings = cupsToSell * price;
+                // Always get tips for every sale
+                for (let i = 0; i < cupsToSell; i++) {
+                    getTip();
+                }
+
+                gameState.pucks -= cupsConsumed;
+                gameState.money += earnings;
+                
+                logMessage(`🤖 Barista sold ${cupsToSell} coffee for $${earnings.toFixed(2)}.`, 'green');
+
+                updateUI();
+                return; // Job done for this cycle
+            }
+
+            // Priority 2: Tamp Grounds
+            if (gameState.grounds > 0) {
+                const amount = gameState.grounds;
+                gameState.grounds = 0;
+                gameState.pucks += amount;
+                logMessage(`🤖 Barista prepared ${amount} servings.`, 'cyan');
+                updateUI();
+                return;
+            }
+
+            // Priority 3: Grind Beans
+            if (gameState.beansAmount > 0) {
+                const grindAmount = 1 + gameState.upgrades.grinder;
+                const beansToGrind = Math.min(gameState.beansAmount, grindAmount);
+                gameState.beansAmount -= beansToGrind;
+                gameState.grounds += beansToGrind;
+                logMessage(`🤖 Barista ground ${beansToGrind} beans.`, 'stone');
+                updateUI();
+                return;
+            }
+            
+            // Priority 4: Buy Beans
+            if (gameState.money >= COFFEE_COST) {
+                gameState.money -= COFFEE_COST;
+                gameState.beansAmount += 1;
+                logMessage(`🤖 Barista bought a bag of beans.`, 'blue');
+                updateUI();
+                return;
+            }
+        }
+
+        function generatePassiveIncome() {
+            const income = getPassiveIncome();
+            if (income > 0) {
+                gameState.money += income;
+                updateUI();
+            }
+        }
+        
+        function updateUI() {
+            // Update stats
+            const oldMoney = parseFloat(moneyDisplay.textContent.replace('$', ''));
+            const oldBeans = parseInt(beansDisplay.textContent);
+
+            moneyDisplay.textContent = `$${formatNumber(gameState.money)}`;
+            beansDisplay.textContent = formatInteger(gameState.beansAmount);
+            groundsDisplay.textContent = formatInteger(gameState.grounds);
+            pucksDisplay.textContent = formatInteger(gameState.pucks);
+            brewingDisplay.textContent = beanInfo[gameState.beans.active].name;
+            
+            if (gameState.money !== oldMoney) moneyDisplay.classList.add('number-pop');
+            if (gameState.beansAmount !== oldBeans) beansDisplay.classList.add('number-pop');
+
+            setTimeout(() => {
+                moneyDisplay.classList.remove('number-pop');
+                beansDisplay.classList.remove('number-pop');
+            }, 300);
+
+
+            // Update CPS display
+            const averageTipPerSale = 1.00 / 2; // Average tip is half of the max tip ($1.00)
+            const baristaSalesPerSecond = (gameState.upgrades.barista * (getCoffeePrice() + averageTipPerSale)) / (getAutoSellInterval() / 1000);
+            const totalCps = baristaSalesPerSecond + getPassiveIncome();
+            cpsDisplay.textContent = `$${totalCps.toFixed(2)}`;
+
+            // Update buttons
+            buy1BeanBtn.disabled = gameState.money < COFFEE_COST * 1;
+            buy10BeanBtn.disabled = gameState.money < COFFEE_COST * 10;
+            buy100BeanBtn.disabled = gameState.money < COFFEE_COST * 100;
+            sellCoffeeBtn.disabled = gameState.pucks <= 0;
+            grindBtn.disabled = gameState.beansAmount <= 0;
+            tampBtn.disabled = gameState.grounds <= 0;
+
+            // Update settings controls
+            shortenNumbersToggle.checked = gameState.shortenNumbers;
+
+            // Update upgrades
+            upgradesContainer.innerHTML = '';
+            for (const key in upgradeInfo) {
+                const info = upgradeInfo[key];
+                const level = gameState.upgrades[key];
+                const cost = getUpgradeCost(key);
+
+                const canAfford = gameState.money >= cost;
+
+                const upgradeEl = document.createElement('div');
+                upgradeEl.className = 'p-4 border-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 rounded';
+                upgradeEl.style.borderColor = 'var(--border-color)';
+                upgradeEl.innerHTML = `
+                    <div>
+                        <h3 class="font-bold text-xl">${info.name} <span class="text-sm font-normal bg-gray-300/50 text-gray-800 px-2 py-0.5 rounded">Lvl ${level}</span></h3>
+                        <p class="text-base upgrade-description mt-1">${info.description}</p>
+                        <p class="text-base text-blue-600 font-medium mt-1">${info.effect(level)}</p>
+                    </div>
+                    <button class="w-full sm:w-auto btn ${canAfford ? 'bg-blue-600' : ''} text-white font-bold py-2 px-4 text-base whitespace-nowrap" ${!canAfford ? 'disabled' : ''} onclick="buyUpgrade('${key}')">
+                        Cost:<br>$${formatNumber(cost)}
+                    </button>
+                `;
+                upgradesContainer.appendChild(upgradeEl);
+            }
+            renderBeanShop();
+            updateTipJarVisuals();
+            checkLoseCondition();
+        }
+
+        function updateTipJarVisuals() {
+            const tipFills = document.querySelectorAll('.tip-fill');
+            tipFills.forEach(fill => fill.classList.add('hidden'));
+
+            tipJarContainer.style.display = 'block'; // Always visible
+            const capacity = 50; // A fixed capacity for the visual
+            const fillPercentage = Math.min(1, gameState.tipJarAmount / capacity);
+
+            if (fillPercentage > 0.75) document.getElementById('tip-fill-4').classList.remove('hidden');
+            else if (fillPercentage > 0.5) document.getElementById('tip-fill-3').classList.remove('hidden');
+            else if (fillPercentage > 0.25) document.getElementById('tip-fill-2').classList.remove('hidden');
+            else if (fillPercentage > 0) document.getElementById('tip-fill-1').classList.remove('hidden');
+        }
+
+        function collectTips() {
+            if (gameState.tipJarAmount > 0) {
+                const collected = gameState.tipJarAmount;
+                gameState.money += collected;
+                gameState.tipJarAmount = 0;
+                showToast(`Collected $${collected.toFixed(2)} in tips!`);
+                updateUI();
+            }
+        }
+
+        function checkLoseCondition() {
+            // Lose condition: Less than the cost of a bean and no beans, grounds, or pucks to make money from.
+            if (gameState.money < COFFEE_COST && gameState.beansAmount <= 0 && gameState.grounds <= 0 && gameState.pucks <= 0) {
+                gameOverModal.classList.remove('hidden');
+                stopGameLoops();
+            }
+        }
+
+        function checkDebugPassword() {
+            const password = passwordInput.value;
+            if (password === 'espresso') {
+                debugMenuContainer.classList.remove('hidden');
+                unlockDebugBtn.classList.add('hidden');
+                passwordModal.classList.add('hidden');
+                passwordInput.value = ''; // Clear input
+                logMessage('⚙️ Debug menu unlocked.', 'orange');
+            } else {
+                logMessage('⛔ Incorrect debug password.', 'red');
+                showToast('Incorrect Password!');
+                passwordInput.value = ''; // Clear input
+            }
+        }
+
+        function addDebugMoney(amount) {
+            gameState.money += amount;
+            let amountStr;
+            if (amount >= 1e12) amountStr = `$${amount / 1e12}T`;
+            else if (amount >= 1e9) amountStr = `$${amount / 1e9}B`;
+            else if (amount >= 1e6) amountStr = `$${amount / 1e6}M`;
+            else if (amount >= 1e3) amountStr = `$${amount / 1e3}k`;
+            else amountStr = `$${amount}`;
+            logMessage(`⚙️ DEBUG: Added ${amountStr}.`, 'orange');
+            updateUI();
+        }
+
+        function showToast(message) {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'card p-4 text-lg font-bold animate-pulse';
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        function logMessage(message, color) {
+            const p = document.createElement('p');
+            p.textContent = message;
+            if (color) {
+                p.style.color = color;
+            }
+            gameLog.prepend(p);
+            if (gameLog.children.length > 20) {
+                gameLog.lastChild.remove();
+            }
+        }
+
+        // Bean Shop Logic
+        function renderBeanShop() {
+            beanShopContainer.innerHTML = '';
+            for (const key in beanInfo) {
+                const bean = beanInfo[key];
+                const isOwned = gameState.beans.owned.includes(key);
+                const isActive = gameState.beans.active === key;
+                
+                const canAfford = gameState.money >= bean.cost;
+
+                const beanEl = document.createElement('div');
+                beanEl.className = 'p-4 border-2 flex flex-col justify-between items-start gap-2 rounded';
+                beanEl.style.borderColor = 'var(--border-color)';
+                
+                let buttonHtml;
+                if (isActive) {
+                    buttonHtml = `<button class="w-full btn bg-green-600 text-white font-bold py-2 px-4 text-base" disabled>✔ Selected</button>`;
+                } else if (isOwned) {
+                    buttonHtml = `<button class="w-full btn bg-blue-600 text-white font-bold py-2 px-4 text-base" onclick="selectBean('${key}')">Select</button>`;
+                } else {
+                    buttonHtml = `<button class="w-full btn ${canAfford ? 'bg-purple-600' : ''} text-white font-bold py-2 px-4 text-base" ${!canAfford ? 'disabled' : ''} onclick="buyBean('${key}')">Buy:<br>$${formatNumber(bean.cost)}</button>`;
+                }
+
+                beanEl.innerHTML = `
+                    <div>
+                        <h3 class="font-bold text-xl">${bean.name}</h3>
+                        <p class="text-base upgrade-description mt-1">${bean.description}</p>
+                        <p class="text-base text-purple-600 font-medium mt-1">${bean.effectText}</p>
+                    </div>
+                    ${buttonHtml}
+                `;
+                beanShopContainer.appendChild(beanEl);
+            }
+        }
+
+        function buyBean(beanKey) {
+            const bean = beanInfo[beanKey];
+            if (gameState.money >= bean.cost && !gameState.beans.owned.includes(beanKey)) {
+                gameState.money -= bean.cost;
+                gameState.beans.owned.push(beanKey);
+                logMessage(`🌿 Purchased "${bean.name}" beans!`, 'purple');
+                selectBean(beanKey); // Auto-select on buy
+            }
+        }
+
+        function selectBean(beanKey) {
+             if (gameState.beans.owned.includes(beanKey)) {
+                gameState.beans.active = beanKey;
+                logMessage(`☕ Now brewing: "${beanInfo[beanKey].name}"!`, 'purple');
+                updateUI();
+             }
+        }
+
+        // Save and Load
+        function saveGame() {
+            localStorage.setItem('coffeeTycoonSave', JSON.stringify(gameState));
+            logMessage('💾 Game Saved!', 'blue');
+        }
+
+        function loadGame() {
+            const savedGame = localStorage.getItem('coffeeTycoonSave');
+            if (savedGame) {
+                const loadedState = JSON.parse(savedGame);
+
+                // Clean up old/removed properties from the loaded save data before merging it.
+                if (loadedState.upgrades) {
+                    delete loadedState.upgrades.tipJar;
+                    delete loadedState.upgrades.coffeeBuyer;
+                }
+                if (loadedState.coffee) {
+                    loadedState.beansAmount = loadedState.beansAmount || loadedState.coffee;
+                    delete loadedState.coffee;
+                }
+
+                // Merge loaded state into the default game state structure.
+                gameState = {
+                    ...gameState, // Start with defaults for new properties
+                    ...loadedState, // Overwrite with saved data
+                    upgrades: {
+                        ...gameState.upgrades, // Start with default upgrades
+                        ...loadedState.upgrades // Overwrite with saved upgrades
+                    },
+                };
+
+                // Add validation for active bean to prevent loading errors from old/bad saves
+                if (!gameState.beans) {
+                    gameState.beans = { owned: ['standard'], active: 'standard' };
+                } else if (!beanInfo[gameState.beans.active]) {
+                    console.warn("Invalid active bean found in save file. Resetting to 'standard'.");
+                    gameState.beans.active = 'standard';
+                }
+
+                logMessage('✅ Game Loaded!', 'blue');
+            } else {
+                 logMessage('Welcome to Coffee Shop Tycoon!', 'purple');
+            }
+        }
+        
+        function resetGame() {
+            // No confirmation to avoid disruptive pop-ups
+            localStorage.removeItem('coffeeTycoonSave');
+            localStorage.removeItem('coffeeTycoonTheme');
+            gameState = {
+                money: 10,
+                beansAmount: 0,
+                grounds: 0,
+                pucks: 0,
+                tipJarAmount: 0,
+                shortenNumbers: true,
+                upgrades: { barista: 0, espressoMachine: 0, marketing: 0, franchise: 0, coffeeFarm: 0, driveThru: 0, celebrityEndorsement: 0, grinder: 0, tamper: 0 },
+                beans: { owned: ['standard'], active: 'standard' }
+            };
+            logMessage('💥 Game Reset!', 'red');
+            applyTheme('coffeehouse');
+            gameOverModal.classList.add('hidden'); // Hide game over screen
+            updateUI();
+            startGameLoops(); // Restart loops
+        }
+
+        // Theme Logic
+        function applyTheme(themeName) {
+            document.body.dataset.theme = themeName;
+            localStorage.setItem('coffeeTycoonTheme', themeName);
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('coffeeTycoonTheme') || 'coffeehouse';
+            applyTheme(savedTheme);
+        }
+
+        // New Game Start functions
+        function startGame() {
+            openingMenu.classList.add('hidden');
+            mainGameContainer.classList.remove('hidden');
+            updateUI();
+            startGameLoops();
+        }
+
+        function startNewGame() {
+            // Essentially a soft reset without clearing storage
+            gameState = {
+                money: 10,
+                beansAmount: 0,
+                grounds: 0,
+                pucks: 0,
+                tipJarAmount: 0,
+                upgrades: { barista: 0, espressoMachine: 0, marketing: 0, franchise: 0, coffeeFarm: 0, driveThru: 0, celebrityEndorsement: 0, grinder: 0, tamper: 0 },
+                beans: { owned: ['standard'], active: 'standard' }
+            };
+            gameLog.innerHTML = ''; // Clear log for new game
+            logMessage('Welcome to Coffee Shop Tycoon!', 'purple');
+            startGame();
+        }
+
+        function loadAndStartGame() {
+            loadGame();
+            startGame();
+        }
+
+        // Event Listeners
+        newGameBtn.addEventListener('click', startNewGame);
+        loadGameBtn.addEventListener('click', loadAndStartGame);
+        buy1BeanBtn.addEventListener('click', () => buyBeans(1));
+        buy10BeanBtn.addEventListener('click', () => buyBeans(10));
+        buy100BeanBtn.addEventListener('click', () => buyBeans(100));
+        sellCoffeeBtn.addEventListener('click', sellCoffee);
+        grindBtn.addEventListener('click', grindBeans);
+        tampBtn.addEventListener('click', tampGrounds);
+        saveBtn.addEventListener('click', saveGame);
+        resetBtn.addEventListener('click', resetGame);
+        settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+        closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+        tipJarContainer.addEventListener('click', collectTips);
+        restartGameBtn.addEventListener('click', resetGame);
+        
+        beanShopBtn.addEventListener('click', () => beanShopModal.classList.remove('hidden'));
+        closeBeanShopBtn.addEventListener('click', () => beanShopModal.classList.add('hidden'));
+        
+        add1kBtn.addEventListener('click', () => addDebugMoney(1000));
+        add10kBtn.addEventListener('click', () => addDebugMoney(10000));
+        add100kBtn.addEventListener('click', () => addDebugMoney(100000));
+        add1mBtn.addEventListener('click', () => addDebugMoney(1000000));
+        add1bBtn.addEventListener('click', () => addDebugMoney(1000000000));
+        add1tBtn.addEventListener('click', () => addDebugMoney(1000000000000));
+
+        unlockDebugBtn.addEventListener('click', () => {
+            passwordInput.value = ''; // Clear previous input before showing
+            passwordModal.classList.remove('hidden');
+        });
+        submitPasswordBtn.addEventListener('click', checkDebugPassword);
+        cancelPasswordBtn.addEventListener('click', () => passwordModal.classList.add('hidden'));
+
+        themeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const theme = button.dataset.theme;
+                applyTheme(theme);
+            });
+        });
+
+        shortenNumbersToggle.addEventListener('change', () => {
+            gameState.shortenNumbers = shortenNumbersToggle.checked;
+            updateUI();
+        });
+
+        // Game Loop
+        let mainGameLoop, passiveIncomeLoopInterval, autoGenerateCoffeeInterval;
+
+        function stopGameLoops() {
+            clearInterval(mainGameLoop);
+            clearInterval(passiveIncomeLoopInterval);
+            clearInterval(autoGenerateCoffeeInterval);
+        }
+
+        function startGameLoops() {
+            stopGameLoops(); // Clear existing loops to prevent duplicates
+            mainGameLoop = setInterval(gameLoop, getAutoSellInterval());
+            passiveIncomeLoopInterval = setInterval(passiveIncomeLoop, 1000);
+            autoGenerateCoffeeInterval = setInterval(autoGenerateCoffee, 1000);
+        }
+        
+        function gameLoop() {
+            baristaWorkCycle();
+        }
+        
+        function passiveIncomeLoop() {
+             generatePassiveIncome();
+        }
+
+        // Initialization
+        window.onload = () => {
+            initTheme();
+            const savedGame = localStorage.getItem('coffeeTycoonSave');
+            loadGameBtn.disabled = !savedGame;
+        };
+
+    </script>
+</body>
+</html>
+
